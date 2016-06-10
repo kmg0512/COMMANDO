@@ -11,43 +11,86 @@ public enum YukariState
 public class YukariController : MonoBehaviour {
 
     public Animator animator;
+    public float speed = 5f;
+    public float shootDelay = 0.12f;
+    public float damage = 20f;
+    public MuzzleFlash muzzleFlash;
 
+    private CharacterController m_controller;
     private YukariState m_state;
-    private float m_animationTime;
+    private float m_readyTime;
+    private float m_delayedTime;
 
 	// Use this for initialization
 	void Start () {
         if (!animator) Debug.LogError("Yuzuki Yukari : Animator not found.");
+        m_controller = GetComponent<CharacterController>();
+        if (!m_controller) Debug.LogError("Yuzuki Yukari : Character Controller not found.");
 
         m_state = YukariState.Ready;
-        m_animationTime = 0;
+        m_readyTime = 0;
+        m_delayedTime = shootDelay;
 	}
 	
 	// Update is called once per frame
 	void Update () {
         // Ready 상태일 때 Active 상태로 전환한다.
-        m_state = StateTransition();
+        m_state = ReadyStateTransition();
+
+        // 딜레이 카운트
+        CountDelay();
 	}
 
-    private YukariState StateTransition()
+    private YukariState ReadyStateTransition()
     {
         if(m_state == YukariState.Ready)
         {
-            if(m_animationTime > 0.933f)
+            if(m_readyTime > 1.866f)
             {
-                m_animationTime = 0;
-                animator.SetBool("Ready", true);
+                m_readyTime = 0;
+                animator.SetFloat("Ready", 1.0f);
                 return YukariState.Active;
             }
-
-            m_animationTime += Time.deltaTime;
+            m_readyTime += Time.deltaTime;
         }
 
         return YukariState.Ready;
     }
 
-    public void MoveTo(NavNode node)
+    private void CountDelay()
     {
+        if (m_delayedTime < shootDelay)
+        {
+            m_delayedTime += Time.deltaTime;
+        }
+        else if (m_delayedTime > shootDelay)
+        {
+            m_delayedTime = shootDelay;
+        }
+    }
 
+    private void Shoot(RaycastHit hit)
+    {
+        Shootable shootable = hit.transform.GetComponent<Shootable>();
+        if(shootable != null)
+        {
+            Spawner.Instance.HitShootable(hit.transform.gameObject);
+        }
+    }
+
+    public void HitSomething(RaycastHit hit)
+    {
+        if(m_delayedTime == shootDelay)
+        {
+            // 애니메이션 및 사운드
+            animator.SetTrigger("Fire");
+            if (muzzleFlash != null) muzzleFlash.Emit();
+
+            // 발사
+            Shoot(hit);
+
+            // 카운트 초기화
+            m_delayedTime = 0;
+        }
     }
 }
