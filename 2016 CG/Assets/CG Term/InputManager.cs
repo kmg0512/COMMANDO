@@ -3,6 +3,7 @@ using System.Collections;
 
 public class InputManager : MonoBehaviour {
 
+    #region Singleton
     private static InputManager m_instance = null;
     public static InputManager Instance
     {
@@ -27,12 +28,13 @@ public class InputManager : MonoBehaviour {
             m_instance = this;
         }
     }
+    #endregion
 
-    public GameObject yukari;
+    private GameObject m_yukari;
 
 	// Use this for initialization
 	void Start () {
-        if (yukari == null) Debug.LogError("InputManager : It requires yukari reference.");
+        
 	}
 
     // Update is called once per frame
@@ -45,10 +47,12 @@ public class InputManager : MonoBehaviour {
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             RaycastHit hit;
 
-            if (Physics.Raycast(ray, out hit))
+            int layerMask = 1 << LayerMask.NameToLayer("Yuzuki Yukari");
+            layerMask = ~layerMask;
+            if (Physics.Raycast(ray, out hit, Mathf.Infinity, layerMask))
             {
                 // 유카리에게 hit 정보를 보내고 할 일 끝
-                if (yukari != null) yukari.GetComponent<YukariController>().HitSomething(hit);
+                if (m_yukari != null) m_yukari.GetComponent<YukariController>().HitSomething(hit);
             }
         }
 #endif
@@ -62,13 +66,18 @@ public class InputManager : MonoBehaviour {
                 Ray ray = Camera.main.ScreenPointToRay(Input.GetTouch(0).position);
                 RaycastHit hit;
 
-                if (Physics.Raycast(ray, out hit, Mathf.Infinity))
+                if (Physics.Raycast(ray, out hit, 1 << 8))
                 {
                     // 유카리에게 hit 정보를 보내고 할 일 끝
-                    if (yukari != null) yukari.GetComponent<YukariController>().HitSomething(hit);
+                    if (m_yukari != null) m_yukari.GetComponent<YukariController>().HitSomething(hit);
                 }
             }
         }
 #endif
+    }
+
+    public void SetYukari(GameObject yukari)
+    {
+        m_yukari = yukari;
     }
 }

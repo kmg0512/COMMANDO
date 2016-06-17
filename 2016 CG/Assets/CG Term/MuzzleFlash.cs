@@ -36,6 +36,6 @@ public class MuzzleFlash : MonoBehaviour {
     {
         emitter.Emit();
         audio.Play();
-        light.enabled = true;
+        //light.enabled = true;
     }
 }
